@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['Ma Shan Zheng', 'cursive'],
-        body: ['Quicksand', 'sans-serif'],
+        display: ['Noto Serif SC', 'serif'],
+        body: ['Cormorant Garamond', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -51,19 +51,20 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        cosmic: {
-          deep: "hsl(var(--cosmic-deep))",
-          nebula: "hsl(var(--cosmic-nebula))",
-          aurora: "hsl(var(--cosmic-aurora))",
-          stardust: "hsl(var(--cosmic-stardust))",
+        garden: {
+          "green-light": "hsl(var(--garden-green-light))",
+          "green-medium": "hsl(var(--garden-green-medium))",
+          "green-dark": "hsl(var(--garden-green-dark))",
+          yellow: "hsl(var(--garden-yellow))",
+          terracotta: "hsl(var(--garden-terracotta))",
         },
         flower: {
-          pink: "hsl(var(--flower-pink))",
-          lavender: "hsl(var(--flower-lavender))",
-          teal: "hsl(var(--flower-teal))",
-          gold: "hsl(var(--flower-gold))",
+          "iris-purple": "hsl(var(--flower-iris-purple))",
+          "iris-violet": "hsl(var(--flower-iris-violet))",
+          "pink-rose": "hsl(var(--flower-pink-rose))",
+          magenta: "hsl(var(--flower-magenta))",
+          "red-poppy": "hsl(var(--flower-red-poppy))",
           coral: "hsl(var(--flower-coral))",
-          mint: "hsl(var(--flower-mint))",
         },
       },
       borderRadius: {

@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { FlowerData } from '@/components/Garden';
-import { FlowerType } from '@/components/Flower';
+import { FlowerType } from '@/components/ImpressionistFlower';
 
-const STORAGE_KEY = 'cosmic-garden-flowers';
+const STORAGE_KEY = 'impressionist-garden-flowers';
 
-// Sample encouraging messages
+// Sample encouraging messages with impressionist flower types
 const sampleMessages: { message: string; author: string; type: FlowerType }[] = [
-  { message: '你今天做得很好，继续加油！', author: '来自远方的朋友', type: 'rose' },
-  { message: '每一个小进步都值得庆祝 ✨', author: '星光使者', type: 'starlight' },
-  { message: '无论发生什么，你都不是一个人', author: '温暖的人', type: 'lotus' },
-  { message: '相信自己，你比想象中更强大', author: '勇气之花', type: 'cherry' },
-  { message: '今天也要开心哦！', author: '快乐小精灵', type: 'cosmos' },
+  { message: '你今天做得很好，继续加油！', author: '来自远方的朋友', type: 'iris' },
+  { message: '每一个小进步都值得庆祝 ✨', author: '星光使者', type: 'lavender' },
+  { message: '无论发生什么，你都不是一个人', author: '温暖的人', type: 'rose' },
+  { message: '相信自己，你比想象中更强大', author: '勇气之花', type: 'poppy' },
+  { message: '今天也要开心哦！', author: '快乐小精灵', type: 'daisy' },
 ];
 
 const generatePosition = (existingFlowers: FlowerData[]): { x: number; y: number } => {
@@ -18,14 +18,13 @@ const generatePosition = (existingFlowers: FlowerData[]): { x: number; y: number
   const maxAttempts = 50;
   
   while (attempts < maxAttempts) {
-    const x = 10 + Math.random() * 80; // 10% to 90% from left
-    const y = 65 + Math.random() * 25; // 65% to 90% from top (bottom area)
+    const x = 10 + Math.random() * 80;
+    const y = 60 + Math.random() * 30;
     
-    // Check if too close to existing flowers
     const tooClose = existingFlowers.some((flower) => {
       const dx = Math.abs(flower.x - x);
       const dy = Math.abs(flower.y - y);
-      return dx < 8 && dy < 8;
+      return dx < 7 && dy < 6;
     });
     
     if (!tooClose) {
@@ -35,10 +34,9 @@ const generatePosition = (existingFlowers: FlowerData[]): { x: number; y: number
     attempts++;
   }
   
-  // Fallback: just return a random position
   return {
     x: 10 + Math.random() * 80,
-    y: 65 + Math.random() * 25,
+    y: 60 + Math.random() * 30,
   };
 };
 
@@ -46,13 +44,29 @@ export const useFlowers = () => {
   const [flowers, setFlowers] = useState<FlowerData[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load flowers from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        setFlowers(parsed);
+        // Validate flower types - migrate old types to new ones
+        const validTypes: FlowerType[] = ['iris', 'poppy', 'rose', 'wildflower', 'lavender', 'daisy'];
+        const migratedFlowers = parsed.map((flower: FlowerData) => {
+          if (!validTypes.includes(flower.type as FlowerType)) {
+            // Map old types to new types
+            const typeMap: Record<string, FlowerType> = {
+              'lotus': 'iris',
+              'cherry': 'rose',
+              'cosmos': 'wildflower',
+              'starlight': 'lavender',
+              'aurora': 'daisy',
+            };
+            return { ...flower, type: typeMap[flower.type] || 'iris' };
+          }
+          return flower;
+        });
+        setFlowers(migratedFlowers);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(migratedFlowers));
       } catch (e) {
         console.error('Failed to parse stored flowers:', e);
         initializeSampleFlowers();

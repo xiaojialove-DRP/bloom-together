@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flower, FlowerType } from './Flower';
+import { ImpressionistFlower, FlowerType } from './ImpressionistFlower';
 
 export interface FlowerData {
   id: string;
@@ -19,51 +19,17 @@ interface GardenProps {
 export const Garden = ({ flowers, onFlowerClick }: GardenProps) => {
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {/* Ground gradient */}
-      <div 
-        className="absolute bottom-0 left-0 right-0 h-1/3"
-        style={{
-          background: 'linear-gradient(to top, hsla(120, 30%, 8%, 0.8) 0%, hsla(120, 20%, 5%, 0.4) 50%, transparent 100%)',
-        }}
-      />
-      
-      {/* Grass effect */}
-      <div className="absolute bottom-0 left-0 right-0 h-20 opacity-30">
-        {Array.from({ length: 50 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute bottom-0"
-            style={{
-              left: `${i * 2}%`,
-              width: '4px',
-              height: `${20 + Math.random() * 30}px`,
-              background: `linear-gradient(to top, hsl(120, 40%, 25%), hsl(120, 50%, 35%))`,
-              transformOrigin: 'bottom center',
-            }}
-            animate={{
-              rotate: [-5, 5, -5],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
-      
       {/* Flowers */}
       <AnimatePresence>
         {flowers.map((flower, index) => (
-          <Flower
+          <ImpressionistFlower
             key={flower.id}
             type={flower.type}
             message={flower.message}
             author={flower.author}
             x={flower.x}
             y={flower.y}
-            delay={index * 100}
+            delay={index * 80}
             onClick={() => onFlowerClick?.(flower)}
           />
         ))}
@@ -77,25 +43,25 @@ export const Garden = ({ flowers, onFlowerClick }: GardenProps) => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <div className="text-center px-8">
+          <div className="text-center px-8 py-6 bg-white/80 backdrop-blur-sm rounded-2xl border border-white/60 shadow-lg">
             <motion.p 
-              className="text-4xl mb-4"
+              className="text-4xl mb-3"
               animate={{ 
                 scale: [1, 1.1, 1],
                 rotate: [0, 5, -5, 0],
               }}
               transition={{
-                duration: 2,
+                duration: 3,
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
             >
               🌱
             </motion.p>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg text-foreground font-body">
               这个花园还在等待第一朵花...
             </p>
-            <p className="text-sm text-muted-foreground/70 mt-2">
+            <p className="text-sm text-muted-foreground mt-2 font-body">
               点击下方按钮，种下你的鼓励吧
             </p>
           </div>
