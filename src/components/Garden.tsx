@@ -43,7 +43,16 @@ export const Garden = ({ flowers, onFlowerClick }: GardenProps) => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <div className="text-center px-8 py-6 bg-white/80 backdrop-blur-sm rounded-2xl border border-white/60 shadow-lg">
+          <div 
+            className="text-center px-8 py-6 rounded-2xl"
+            style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            }}
+          >
             <motion.p 
               className="text-4xl mb-3"
               animate={{ 
@@ -58,11 +67,11 @@ export const Garden = ({ flowers, onFlowerClick }: GardenProps) => {
             >
               🌱
             </motion.p>
-            <p className="text-lg text-foreground font-body">
-              这个花园还在等待第一朵花...
+            <p className="text-lg text-white font-body" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
+              This garden is waiting for its first flower...
             </p>
-            <p className="text-sm text-muted-foreground mt-2 font-body">
-              点击下方按钮，种下你的鼓励吧
+            <p className="text-sm text-white/70 mt-2 font-body">
+              Click below to plant your encouragement
             </p>
           </div>
         </motion.div>
