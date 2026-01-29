@@ -253,6 +253,7 @@ export const ImpressionistFlower = ({ type, message, author, x, y, delay = 0, on
             {author && (
               <p className="text-xs text-muted-foreground text-center mt-2 font-body italic">— {author}</p>
             )}
+            
             <div 
               className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rotate-45 border-r border-b border-white/50"
               style={{ boxShadow: '2px 2px 4px rgba(0,0,0,0.05)' }}

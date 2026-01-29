@@ -1,22 +1,32 @@
 import { motion } from 'framer-motion';
 import { ImpressionistBackground } from '@/components/ImpressionistBackground';
 import { Garden } from '@/components/Garden';
-import { MessageForm } from '@/components/MessageForm';
+import { ChatDialog } from '@/components/ChatDialog';
 import { GardenStats } from '@/components/GardenStats';
-import { useFlowers } from '@/hooks/useFlowers';
+import { FallingPetals } from '@/components/FallingPetals';
+import { useGlobalFlowers } from '@/hooks/useGlobalFlowers';
 import { FlowerType } from '@/components/ImpressionistFlower';
 
 const Index = () => {
-  const { flowers, addFlower, isLoaded } = useFlowers();
+  const { flowers, addLocalFlower, isLoaded } = useGlobalFlowers();
 
-  const handleSubmitMessage = (message: string, author: string, flowerType: FlowerType) => {
-    addFlower(message, author, flowerType);
+  const handleFlowerPlanted = (flower: {
+    type: FlowerType;
+    message: string;
+    author: string;
+    x: number;
+    y: number;
+  }) => {
+    addLocalFlower(flower);
   };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Impressionist Background */}
       <ImpressionistBackground />
+      
+      {/* Falling Petals */}
+      <FallingPetals />
       
       {/* Header */}
       <motion.header 
@@ -32,7 +42,7 @@ const Index = () => {
             letterSpacing: '0.05em',
           }}
         >
-          印象派花园
+          Cosmic Garden
         </motion.h1>
         <motion.p 
           className="text-base sm:text-lg text-white/95 max-w-lg mx-auto font-body leading-relaxed"
@@ -43,7 +53,7 @@ const Index = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          来自世界各地的鼓励与善意，在这里绽放成花
+          Encouragement and kindness from around the world, blooming into flowers
         </motion.p>
       </motion.header>
       
@@ -53,8 +63,8 @@ const Index = () => {
       {/* Garden */}
       {isLoaded && <Garden flowers={flowers} />}
       
-      {/* Message Form */}
-      <MessageForm onSubmit={handleSubmitMessage} />
+      {/* Chat Dialog */}
+      <ChatDialog onFlowerPlanted={handleFlowerPlanted} />
     </div>
   );
 };
