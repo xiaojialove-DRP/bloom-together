@@ -84,9 +84,8 @@ export const ImpressionistFlower = ({ type, message, author, x, y, delay = 0, on
         />
         
         {/* Leaves - painterly organic shapes */}
-        <AnimatePresence>
-          {stage !== 'seed' && (
-            <>
+        {stage !== 'seed' && (
+          <>
               <motion.ellipse
                 cx="38"
                 cy="85"
@@ -109,14 +108,12 @@ export const ImpressionistFlower = ({ type, message, author, x, y, delay = 0, on
                 animate={{ scale: 1, opacity: 0.9 }}
                 transition={{ duration: 0.4, delay: 0.4 }}
               />
-            </>
-          )}
-        </AnimatePresence>
+          </>
+        )}
         
         {/* Petals - impressionist style with soft edges */}
-        <AnimatePresence>
-          {stage === 'bloom' && (
-            <motion.g
+        {stage === 'bloom' && (
+          <motion.g
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.6, ease: "backOut" }}
@@ -159,7 +156,6 @@ export const ImpressionistFlower = ({ type, message, author, x, y, delay = 0, on
               />
             </motion.g>
           )}
-        </AnimatePresence>
         
         {/* Seed */}
         {stage === 'seed' && (

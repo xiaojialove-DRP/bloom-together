@@ -7,9 +7,9 @@ interface GardenStatsProps {
 export const GardenStats = ({ flowerCount }: GardenStatsProps) => {
   return (
     <motion.div 
-      className="fixed top-6 right-6 z-10"
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
+      className="inline-flex"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 0.4 }}
     >
       <div 

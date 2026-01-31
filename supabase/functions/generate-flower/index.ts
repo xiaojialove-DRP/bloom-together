@@ -17,7 +17,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message } = await req.json();
+    const { message, author } = await req.json();
     
     if (!message) {
       return new Response(
@@ -25,6 +25,8 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const userAuthor = author || 'Anonymous';
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -34,20 +36,19 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           flowerType: randomFlower,
-          author: 'Anonymous',
-          processedMessage: message
+          author: userAuthor,
+          message: message
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const systemPrompt = `You are a flower garden AI. Based on the user's message, mood, or emoji, determine:
-1. The most suitable flower type from this list: ${FLOWER_TYPES.join(', ')}
-2. A beautiful short message (max 100 chars) to display with the flower
-3. An author name if mentioned, otherwise "Anonymous"
+    const systemPrompt = `You are a flower garden AI. Based on the user's message, mood, or emoji, determine the most suitable flower type from this list: ${FLOWER_TYPES.join(', ')}
+
+Generate a beautiful short message (max 100 chars) to display with the flower.
 
 Respond with ONLY valid JSON in this exact format:
-{"flowerType": "flower_name", "message": "beautiful message", "author": "name or Anonymous"}
+{"flowerType": "flower_name", "message": "beautiful message"}
 
 Match emotions to flowers:
 - Love/romance: rose, tulip, peony
@@ -98,8 +99,8 @@ Match emotions to flowers:
       return new Response(
         JSON.stringify({ 
           flowerType: randomFlower,
-          author: 'Anonymous',
-          processedMessage: message
+          author: userAuthor,
+          message: message
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -121,7 +122,7 @@ Match emotions to flowers:
         JSON.stringify({
           flowerType,
           message: parsed.message || message,
-          author: parsed.author || 'Anonymous'
+          author: userAuthor
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -132,7 +133,7 @@ Match emotions to flowers:
         JSON.stringify({ 
           flowerType: randomFlower,
           message: message,
-          author: 'Anonymous'
+          author: userAuthor
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

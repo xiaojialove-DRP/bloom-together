@@ -3,29 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { FlowerType } from './ImpressionistFlower';
-
-// Map extended AI flower types to base types
-const mapFlowerType = (type: string): FlowerType => {
-  const validTypes: FlowerType[] = ['iris', 'poppy', 'rose', 'wildflower', 'lavender', 'daisy'];
-  if (validTypes.includes(type as FlowerType)) {
-    return type as FlowerType;
-  }
-  const typeMap: Record<string, FlowerType> = {
-    'sunflower': 'daisy',
-    'tulip': 'rose',
-    'orchid': 'iris',
-    'lily': 'lavender',
-    'cherry_blossom': 'rose',
-    'lotus': 'iris',
-    'magnolia': 'rose',
-    'peony': 'rose',
-    'hibiscus': 'poppy',
-    'carnation': 'rose',
-    'chrysanthemum': 'daisy',
-    'daffodil': 'daisy',
-  };
-  return typeMap[type] || 'wildflower';
-};
+import { mapFlowerType } from '@/lib/flowerUtils';
 
 interface ChatDialogProps {
   onFlowerPlanted: (flower: {
@@ -42,6 +20,7 @@ const quickEmojis = ['😊', '❤️', '🌟', '💪', '🙏', '✨', '🌈', '�
 export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
+  const [authorName, setAuthorName] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -65,8 +44,25 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
     setAiResponse(null);
 
     try {
+      // Get user's location
+      let geoData: { latitude?: number; longitude?: number; country?: string; city?: string } = {};
+      try {
+        const geoResponse = await fetch('https://ipapi.co/json/');
+        if (geoResponse.ok) {
+          const geo = await geoResponse.json();
+          geoData = {
+            latitude: geo.latitude,
+            longitude: geo.longitude,
+            country: geo.country_name,
+            city: geo.city,
+          };
+        }
+      } catch (geoError) {
+        console.log('Could not get location:', geoError);
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-flower', {
-        body: { message: finalMessage.trim() }
+        body: { message: finalMessage.trim(), author: authorName.trim() || undefined }
       });
 
       if (error) {
@@ -76,19 +72,23 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
 
       const flowerType = mapFlowerType(data.flowerType || 'wildflower');
       const processedMessage = data.message || finalMessage.trim();
-      const author = data.author || 'Anonymous';
+      const finalAuthor = authorName.trim() || data.author || 'Anonymous';
       const position = generatePosition();
 
-      // Save to database
+      // Save to database with location
       const { error: insertError } = await supabase
         .from('flowers')
         .insert({
           type: flowerType,
           message: processedMessage,
-          author: author,
+          author: finalAuthor,
           mood: finalMessage.trim(),
           x: position.x,
-          y: position.y
+          y: position.y,
+          latitude: geoData.latitude,
+          longitude: geoData.longitude,
+          country: geoData.country,
+          city: geoData.city,
         });
 
       if (insertError) {
@@ -101,7 +101,7 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
       onFlowerPlanted({
         type: flowerType,
         message: processedMessage,
-        author: author,
+        author: finalAuthor,
         x: position.x,
         y: position.y,
       });
@@ -111,6 +111,7 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
       });
 
       setMessage('');
+      setAuthorName('');
       
       setTimeout(() => {
         setAiResponse(null);
@@ -259,6 +260,27 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
                     {emoji}
                   </motion.button>
                 ))}
+              </div>
+
+              {/* Author name input */}
+              <div 
+                className="flex items-center gap-3 p-3 rounded-2xl"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                }}
+              >
+                <span className="text-white/60 text-sm">✍️</span>
+                <input
+                  type="text"
+                  value={authorName}
+                  onChange={(e) => setAuthorName(e.target.value)}
+                  placeholder="Your name (optional)"
+                  disabled={isGenerating}
+                  className="flex-1 bg-transparent text-white placeholder:text-white/40 font-body text-sm outline-none"
+                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}
+                  maxLength={50}
+                />
               </div>
 
               {/* Input area */}
