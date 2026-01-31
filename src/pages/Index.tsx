@@ -1,14 +1,21 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Globe } from 'lucide-react';
 import { ImpressionistBackground } from '@/components/ImpressionistBackground';
-import { Garden } from '@/components/Garden';
+import { Garden, FlowerData } from '@/components/Garden';
 import { ChatDialog } from '@/components/ChatDialog';
 import { GardenStats } from '@/components/GardenStats';
 import { FallingPetals } from '@/components/FallingPetals';
+import { FlowerCard } from '@/components/FlowerCard';
+import { WorldMap } from '@/components/WorldMap';
 import { useGlobalFlowers } from '@/hooks/useGlobalFlowers';
 import { FlowerType } from '@/components/ImpressionistFlower';
 
 const Index = () => {
   const { flowers, addLocalFlower, isLoaded } = useGlobalFlowers();
+  const [selectedFlower, setSelectedFlower] = useState<FlowerData | null>(null);
+  const [isCardOpen, setIsCardOpen] = useState(false);
+  const [isMapOpen, setIsMapOpen] = useState(false);
 
   const handleFlowerPlanted = (flower: {
     type: FlowerType;
@@ -18,6 +25,11 @@ const Index = () => {
     y: number;
   }) => {
     addLocalFlower(flower);
+  };
+
+  const handleFlowerClick = (flower: FlowerData) => {
+    setSelectedFlower(flower);
+    setIsCardOpen(true);
   };
 
   return (
@@ -57,14 +69,47 @@ const Index = () => {
         </motion.p>
       </motion.header>
       
-      {/* Garden Stats */}
-      <GardenStats flowerCount={flowers.length} />
+      {/* Garden Stats + World Map Button */}
+      <div className="relative z-10 flex items-center justify-center gap-3 mb-4">
+        <GardenStats flowerCount={flowers.length} />
+        <motion.button
+          onClick={() => setIsMapOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-full text-white font-body text-sm"
+          style={{
+            background: 'rgba(255, 255, 255, 0.15)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.25)',
+          }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Globe size={16} />
+          <span>World Map</span>
+        </motion.button>
+      </div>
       
       {/* Garden */}
-      {isLoaded && <Garden flowers={flowers} />}
+      {isLoaded && <Garden flowers={flowers} onFlowerClick={handleFlowerClick} />}
       
       {/* Chat Dialog */}
       <ChatDialog onFlowerPlanted={handleFlowerPlanted} />
+
+      {/* Flower Card Modal */}
+      <FlowerCard 
+        isOpen={isCardOpen} 
+        onClose={() => setIsCardOpen(false)} 
+        flower={selectedFlower}
+      />
+
+      {/* World Map Modal */}
+      <WorldMap 
+        isOpen={isMapOpen} 
+        onClose={() => setIsMapOpen(false)} 
+        flowers={flowers}
+      />
     </div>
   );
 };

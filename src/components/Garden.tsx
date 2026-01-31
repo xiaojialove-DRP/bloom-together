@@ -9,6 +9,10 @@ export interface FlowerData {
   x: number;
   y: number;
   createdAt: number;
+  latitude?: number;
+  longitude?: number;
+  country?: string;
+  city?: string;
 }
 
 interface GardenProps {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FlowerType } from '@/components/ImpressionistFlower';
+import { mapFlowerType } from '@/lib/flowerUtils';
 
 export interface FlowerData {
   id: string;
@@ -10,35 +11,11 @@ export interface FlowerData {
   x: number;
   y: number;
   createdAt: number;
+  latitude?: number;
+  longitude?: number;
+  country?: string;
+  city?: string;
 }
-
-// Extended flower types including new AI-generated ones
-const validFlowerTypes: FlowerType[] = [
-  'iris', 'poppy', 'rose', 'wildflower', 'lavender', 'daisy'
-];
-
-const mapFlowerType = (type: string): FlowerType => {
-  // Map extended types to base types
-  const typeMap: Record<string, FlowerType> = {
-    'sunflower': 'daisy',
-    'tulip': 'rose',
-    'orchid': 'iris',
-    'lily': 'lavender',
-    'cherry_blossom': 'rose',
-    'lotus': 'iris',
-    'magnolia': 'rose',
-    'peony': 'rose',
-    'hibiscus': 'poppy',
-    'carnation': 'rose',
-    'chrysanthemum': 'daisy',
-    'daffodil': 'daisy',
-  };
-
-  if (validFlowerTypes.includes(type as FlowerType)) {
-    return type as FlowerType;
-  }
-  return typeMap[type] || 'wildflower';
-};
 
 export const useGlobalFlowers = () => {
   const [flowers, setFlowers] = useState<FlowerData[]>([]);
@@ -66,6 +43,10 @@ export const useGlobalFlowers = () => {
         x: Number(f.x),
         y: Number(f.y),
         createdAt: new Date(f.created_at).getTime(),
+        latitude: f.latitude ? Number(f.latitude) : undefined,
+        longitude: f.longitude ? Number(f.longitude) : undefined,
+        country: f.country || undefined,
+        city: f.city || undefined,
       }));
 
       setFlowers(mappedFlowers);
@@ -95,6 +76,10 @@ export const useGlobalFlowers = () => {
             x: number;
             y: number;
             created_at: string;
+            latitude?: number;
+            longitude?: number;
+            country?: string;
+            city?: string;
           };
 
           const mappedFlower: FlowerData = {
@@ -105,6 +90,10 @@ export const useGlobalFlowers = () => {
             x: Number(newFlower.x),
             y: Number(newFlower.y),
             createdAt: new Date(newFlower.created_at).getTime(),
+            latitude: newFlower.latitude ? Number(newFlower.latitude) : undefined,
+            longitude: newFlower.longitude ? Number(newFlower.longitude) : undefined,
+            country: newFlower.country || undefined,
+            city: newFlower.city || undefined,
           };
 
           setFlowers((prev) => {

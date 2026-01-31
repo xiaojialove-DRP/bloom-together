@@ -17,8 +17,12 @@ export type Database = {
       flowers: {
         Row: {
           author: string
+          city: string | null
+          country: string | null
           created_at: string
           id: string
+          latitude: number | null
+          longitude: number | null
           message: string
           mood: string | null
           type: string
@@ -27,8 +31,12 @@ export type Database = {
         }
         Insert: {
           author?: string
+          city?: string | null
+          country?: string | null
           created_at?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           message: string
           mood?: string | null
           type: string
@@ -37,8 +45,12 @@ export type Database = {
         }
         Update: {
           author?: string
+          city?: string | null
+          country?: string | null
           created_at?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           message?: string
           mood?: string | null
           type?: string
