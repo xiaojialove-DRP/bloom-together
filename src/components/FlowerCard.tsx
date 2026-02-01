@@ -2,6 +2,8 @@ import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, X, Share2 } from 'lucide-react';
 import { FlowerType } from './ImpressionistFlower';
+import { getFlowerEmoji } from '@/lib/flowerDatabase';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface FlowerCardProps {
   isOpen: boolean;
@@ -15,15 +17,6 @@ interface FlowerCardProps {
   } | null;
 }
 
-const flowerEmojis: Record<FlowerType, string> = {
-  iris: '🪻',
-  poppy: '🌺',
-  rose: '🌹',
-  wildflower: '🌸',
-  lavender: '💜',
-  daisy: '🌼',
-};
-
 const flowerColors: Record<FlowerType, { bg: string; accent: string }> = {
   iris: { bg: 'linear-gradient(135deg, #E8E0F0 0%, #D4C6E8 100%)', accent: '#9B7ED9' },
   poppy: { bg: 'linear-gradient(135deg, #FFE8E0 0%, #FFD4C6 100%)', accent: '#E85D3C' },
@@ -34,20 +27,20 @@ const flowerColors: Record<FlowerType, { bg: string; accent: string }> = {
 };
 
 export const FlowerCard = ({ isOpen, onClose, flower }: FlowerCardProps) => {
+  const { t } = useLanguage();
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
   if (!flower) return null;
 
   const colors = flowerColors[flower.type];
-  const emoji = flowerEmojis[flower.type];
+  const emoji = getFlowerEmoji(flower.type);
 
   const handleDownload = async () => {
     if (!cardRef.current || isDownloading) return;
     setIsDownloading(true);
 
     try {
-      // Use html2canvas dynamically
       const html2canvas = (await import('html2canvas')).default;
       const canvas = await html2canvas(cardRef.current, {
         backgroundColor: null,
@@ -67,23 +60,21 @@ export const FlowerCard = ({ isOpen, onClose, flower }: FlowerCardProps) => {
   };
 
   const handleShare = async () => {
-    const shareText = `🌸 ${flower.message}\n\n— ${flower.author}\n\nPlanted in the Cosmic Garden 🌱`;
+    const shareText = `🌸 ${flower.message}\n\n— ${flower.author}\n\n${t.appName} 🌱`;
     
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Cosmic Garden Flower',
+          title: t.appName,
           text: shareText,
           url: window.location.href,
         });
-      } catch (error) {
-        // User cancelled or share failed
+      } catch {
         console.log('Share cancelled');
       }
     } else {
-      // Fallback: copy to clipboard
       await navigator.clipboard.writeText(shareText);
-      alert('Message copied to clipboard!');
+      alert(t.messageCopied);
     }
   };
 
@@ -96,16 +87,11 @@ export const FlowerCard = ({ isOpen, onClose, flower }: FlowerCardProps) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          {/* Backdrop */}
           <motion.div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={onClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
           />
 
-          {/* Card Container */}
           <motion.div
             className="relative z-10"
             initial={{ scale: 0.8, opacity: 0, y: 20 }}
@@ -116,7 +102,7 @@ export const FlowerCard = ({ isOpen, onClose, flower }: FlowerCardProps) => {
             {/* The actual card for download */}
             <div
               ref={cardRef}
-              className="relative w-[320px] sm:w-[380px] rounded-3xl overflow-hidden"
+              className="relative w-[300px] sm:w-[340px] rounded-3xl overflow-hidden"
               style={{
                 background: colors.bg,
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
@@ -124,24 +110,24 @@ export const FlowerCard = ({ isOpen, onClose, flower }: FlowerCardProps) => {
             >
               {/* Decorative elements */}
               <div
-                className="absolute top-0 right-0 w-32 h-32 opacity-20"
+                className="absolute top-0 right-0 w-28 h-28 opacity-20"
                 style={{
                   background: `radial-gradient(circle, ${colors.accent} 0%, transparent 70%)`,
                 }}
               />
               <div
-                className="absolute bottom-0 left-0 w-40 h-40 opacity-15"
+                className="absolute bottom-0 left-0 w-36 h-36 opacity-15"
                 style={{
                   background: `radial-gradient(circle, ${colors.accent} 0%, transparent 70%)`,
                 }}
               />
 
               {/* Content */}
-              <div className="relative p-8 sm:p-10">
+              <div className="relative p-7 sm:p-8">
                 {/* Header */}
-                <div className="text-center mb-6">
+                <div className="text-center mb-5">
                   <motion.div
-                    className="text-6xl mb-4"
+                    className="text-5xl mb-3"
                     animate={{ 
                       scale: [1, 1.1, 1],
                       rotate: [0, 5, -5, 0],
@@ -151,13 +137,13 @@ export const FlowerCard = ({ isOpen, onClose, flower }: FlowerCardProps) => {
                     {emoji}
                   </motion.div>
                   <p className="text-xs uppercase tracking-widest text-gray-500 font-body">
-                    Cosmic Garden
+                    {t.appName}
                   </p>
                 </div>
 
                 {/* Message */}
-                <div className="text-center mb-6">
-                  <p className="text-lg sm:text-xl text-gray-800 font-body leading-relaxed italic">
+                <div className="text-center mb-5">
+                  <p className="text-lg text-gray-800 font-body leading-relaxed italic">
                     "{flower.message}"
                   </p>
                 </div>
@@ -175,20 +161,20 @@ export const FlowerCard = ({ isOpen, onClose, flower }: FlowerCardProps) => {
                 </div>
 
                 {/* Footer */}
-                <div className="text-center pt-4 border-t border-gray-200/50">
+                <div className="text-center pt-3 border-t border-gray-200/50">
                   <p className="text-xs text-gray-400 font-body">
-                    🌱 Spread kindness • Share love
+                    🌱 {t.spreadKindness}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Action buttons (outside card for download) */}
-            <div className="flex justify-center gap-3 mt-4">
+            {/* Action buttons */}
+            <div className="flex justify-center gap-2 mt-4">
               <motion.button
                 onClick={handleDownload}
                 disabled={isDownloading}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-white font-body text-sm"
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-white font-body text-sm"
                 style={{
                   background: 'rgba(255, 255, 255, 0.2)',
                   backdropFilter: 'blur(10px)',
@@ -197,13 +183,13 @@ export const FlowerCard = ({ isOpen, onClose, flower }: FlowerCardProps) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Download size={16} />
-                {isDownloading ? 'Saving...' : 'Save Card'}
+                <Download size={14} />
+                {isDownloading ? t.saving : t.saveCard}
               </motion.button>
               
               <motion.button
                 onClick={handleShare}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-white font-body text-sm"
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-white font-body text-sm"
                 style={{
                   background: 'rgba(255, 255, 255, 0.2)',
                   backdropFilter: 'blur(10px)',
@@ -212,13 +198,13 @@ export const FlowerCard = ({ isOpen, onClose, flower }: FlowerCardProps) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Share2 size={16} />
-                Share
+                <Share2 size={14} />
+                {t.share}
               </motion.button>
 
               <motion.button
                 onClick={onClose}
-                className="flex items-center justify-center w-10 h-10 rounded-full text-white"
+                className="flex items-center justify-center w-9 h-9 rounded-full text-white"
                 style={{
                   background: 'rgba(255, 255, 255, 0.2)',
                   backdropFilter: 'blur(10px)',
@@ -227,7 +213,7 @@ export const FlowerCard = ({ isOpen, onClose, flower }: FlowerCardProps) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <X size={18} />
+                <X size={16} />
               </motion.button>
             </div>
           </motion.div>

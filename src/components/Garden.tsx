@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImpressionistFlower, FlowerType } from './ImpressionistFlower';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export interface FlowerData {
   id: string;
@@ -21,6 +22,8 @@ interface GardenProps {
 }
 
 export const Garden = ({ flowers, onFlowerClick }: GardenProps) => {
+  const { t } = useLanguage();
+  
   return (
     <div className="absolute inset-0 overflow-hidden">
       {/* Flowers */}
@@ -72,10 +75,10 @@ export const Garden = ({ flowers, onFlowerClick }: GardenProps) => {
               🌱
             </motion.p>
             <p className="text-lg text-white font-body" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
-              This garden is waiting for its first flower...
+              {t.emptyGardenTitle}
             </p>
             <p className="text-sm text-white/70 mt-2 font-body">
-              Click below to plant your encouragement
+              {t.emptyGardenSubtitle}
             </p>
           </div>
         </motion.div>
