@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export type FlowerType = 'iris' | 'poppy' | 'rose' | 'wildflower' | 'lavender' | 'daisy';
@@ -46,46 +46,48 @@ const flowerColors: Record<FlowerType, { primary: string; secondary: string; sha
   },
 };
 
-export const ImpressionistFlower = ({ type, message, author, x, y, delay = 0, onClick }: FlowerProps) => {
-  const [stage, setStage] = useState<'seed' | 'sprout' | 'bloom'>('seed');
-  const [isHovered, setIsHovered] = useState(false);
-  const colors = flowerColors[type];
+// Using forwardRef to fix AnimatePresence warning in Garden component
+export const ImpressionistFlower = forwardRef<HTMLDivElement, FlowerProps>(
+  ({ type, message, author, x, y, delay = 0, onClick }, ref) => {
+    const [stage, setStage] = useState<'seed' | 'sprout' | 'bloom'>('seed');
+    const [isHovered, setIsHovered] = useState(false);
+    const colors = flowerColors[type];
 
-  useEffect(() => {
-    const timer1 = setTimeout(() => setStage('sprout'), delay + 400);
-    const timer2 = setTimeout(() => setStage('bloom'), delay + 1200);
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
-  }, [delay]);
+    useEffect(() => {
+      const timer1 = setTimeout(() => setStage('sprout'), delay + 400);
+      const timer2 = setTimeout(() => setStage('bloom'), delay + 1200);
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      };
+    }, [delay]);
 
-  const renderFlower = () => {
-    const petalCount = type === 'iris' ? 6 : type === 'daisy' ? 12 : 8;
-    
-    return (
-      <svg 
-        viewBox="0 0 100 120" 
-        className="w-full h-full"
-      >
-        {/* Stem - organic, curved */}
-        <motion.path
-          d="M50 115 Q45 90 50 70 Q55 50 50 35"
-          stroke="hsl(120, 45%, 35%)"
-          strokeWidth="3"
-          fill="none"
-          strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ 
-            pathLength: stage !== 'seed' ? 1 : 0, 
-            opacity: stage !== 'seed' ? 1 : 0 
-          }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        />
-        
-        {/* Leaves - painterly organic shapes */}
-        {stage !== 'seed' && (
-          <>
+    const renderFlower = () => {
+      const petalCount = type === 'iris' ? 6 : type === 'daisy' ? 12 : 8;
+      
+      return (
+        <svg 
+          viewBox="0 0 100 120" 
+          className="w-full h-full"
+        >
+          {/* Stem - organic, curved */}
+          <motion.path
+            d="M50 115 Q45 90 50 70 Q55 50 50 35"
+            stroke="hsl(120, 45%, 35%)"
+            strokeWidth="3"
+            fill="none"
+            strokeLinecap="round"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ 
+              pathLength: stage !== 'seed' ? 1 : 0, 
+              opacity: stage !== 'seed' ? 1 : 0 
+            }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          />
+          
+          {/* Leaves - painterly organic shapes */}
+          {stage !== 'seed' && (
+            <>
               <motion.ellipse
                 cx="38"
                 cy="85"
@@ -108,12 +110,12 @@ export const ImpressionistFlower = ({ type, message, author, x, y, delay = 0, on
                 animate={{ scale: 1, opacity: 0.9 }}
                 transition={{ duration: 0.4, delay: 0.4 }}
               />
-          </>
-        )}
-        
-        {/* Petals - impressionist style with soft edges */}
-        {stage === 'bloom' && (
-          <motion.g
+            </>
+          )}
+          
+          {/* Petals - impressionist style with soft edges */}
+          {stage === 'bloom' && (
+            <motion.g
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.6, ease: "backOut" }}
@@ -156,83 +158,84 @@ export const ImpressionistFlower = ({ type, message, author, x, y, delay = 0, on
               />
             </motion.g>
           )}
-        
-        {/* Seed */}
-        {stage === 'seed' && (
-          <motion.ellipse
-            cx="50"
-            cy="105"
-            rx="4"
-            ry="6"
-            fill="hsl(30, 50%, 30%)"
-            initial={{ scale: 0, y: 15 }}
-            animate={{ scale: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          />
-        )}
-        
-        {/* Sprout */}
-        {stage === 'sprout' && (
-          <motion.g
-            initial={{ scale: 0, y: 15 }}
-            animate={{ scale: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: "backOut" }}
-          >
-            <ellipse
-              cx="46"
-              cy="45"
-              rx="5"
-              ry="10"
-              fill="hsl(110, 55%, 45%)"
-              transform="rotate(-12 46 45)"
+          
+          {/* Seed */}
+          {stage === 'seed' && (
+            <motion.ellipse
+              cx="50"
+              cy="105"
+              rx="4"
+              ry="6"
+              fill="hsl(30, 50%, 30%)"
+              initial={{ scale: 0, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
             />
-            <ellipse
-              cx="54"
-              cy="45"
-              rx="5"
-              ry="10"
-              fill="hsl(115, 50%, 50%)"
-              transform="rotate(12 54 45)"
-            />
-          </motion.g>
-        )}
-      </svg>
-    );
-  };
+          )}
+          
+          {/* Sprout */}
+          {stage === 'sprout' && (
+            <motion.g
+              initial={{ scale: 0, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: "backOut" }}
+            >
+              <ellipse
+                cx="46"
+                cy="45"
+                rx="5"
+                ry="10"
+                fill="hsl(110, 55%, 45%)"
+                transform="rotate(-12 46 45)"
+              />
+              <ellipse
+                cx="54"
+                cy="45"
+                rx="5"
+                ry="10"
+                fill="hsl(115, 50%, 50%)"
+                transform="rotate(12 54 45)"
+              />
+            </motion.g>
+          )}
+        </svg>
+      );
+    };
 
-  return (
-    <motion.div
-      className="absolute cursor-pointer"
-      style={{ 
-        left: `${x}%`, 
-        top: `${y}%`,
-        width: '70px',
-        height: '90px',
-        transform: 'translate(-50%, -100%)',
-      }}
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      whileHover={{ scale: 1.08 }}
-      transition={{ duration: 0.3 }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={onClick}
-    >
+    return (
       <motion.div
-        animate={{
-          rotate: [-2, 2, -2],
+        ref={ref}
+        className="absolute cursor-pointer"
+        style={{ 
+          left: `${x}%`, 
+          top: `${y}%`,
+          width: '70px',
+          height: '90px',
+          transform: 'translate(-50%, -100%)',
         }}
-        transition={{
-          duration: 4 + Math.random() * 2,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0, opacity: 0 }}
+        whileHover={{ scale: 1.08 }}
+        transition={{ duration: 0.3 }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={onClick}
       >
-        {renderFlower()}
-      </motion.div>
-      
-      {/* Message tooltip - elegant white card */}
-      <AnimatePresence>
+        <motion.div
+          animate={{
+            rotate: [-2, 2, -2],
+          }}
+          transition={{
+            duration: 4 + Math.random() * 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        >
+          {renderFlower()}
+        </motion.div>
+        
+        {/* Message tooltip - elegant white card */}
         {isHovered && stage === 'bloom' && (
           <motion.div 
             className="absolute bottom-full left-1/2 mb-3 px-5 py-4 rounded-xl bg-white/98 backdrop-blur-sm border border-white shadow-xl min-w-[150px] max-w-[240px] z-50"
@@ -256,7 +259,9 @@ export const ImpressionistFlower = ({ type, message, author, x, y, delay = 0, on
             />
           </motion.div>
         )}
-      </AnimatePresence>
-    </motion.div>
-  );
-};
+      </motion.div>
+    );
+  }
+);
+
+ImpressionistFlower.displayName = 'ImpressionistFlower';

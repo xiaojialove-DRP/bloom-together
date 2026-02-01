@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FlowerType } from '@/components/ImpressionistFlower';
-import { mapFlowerType } from '@/lib/flowerUtils';
+import { mapToVisualType } from '@/lib/flowerDatabase';
 
 export interface FlowerData {
   id: string;
@@ -37,7 +37,7 @@ export const useGlobalFlowers = () => {
 
       const mappedFlowers: FlowerData[] = (data || []).map((f) => ({
         id: f.id,
-        type: mapFlowerType(f.type),
+        type: mapToVisualType(f.type),
         message: f.message,
         author: f.author || 'Anonymous',
         x: Number(f.x),
@@ -84,7 +84,7 @@ export const useGlobalFlowers = () => {
 
           const mappedFlower: FlowerData = {
             id: newFlower.id,
-            type: mapFlowerType(newFlower.type),
+            type: mapToVisualType(newFlower.type),
             message: newFlower.message,
             author: newFlower.author || 'Anonymous',
             x: Number(newFlower.x),
