@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { FlowerType } from '@/components/ImpressionistFlower';
 import { mapToVisualType } from '@/lib/flowerDatabase';
 
+// Central FlowerData interface - exported for use across the app
 export interface FlowerData {
   id: string;
   type: FlowerType;

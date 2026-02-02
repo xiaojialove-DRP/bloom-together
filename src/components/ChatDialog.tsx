@@ -16,35 +16,65 @@ interface ChatDialogProps {
   }) => void;
 }
 
+type ChatStep = 'greeting' | 'askName' | 'planting' | 'done';
+
+interface ChatMessage {
+  role: 'ai' | 'user';
+  content: string;
+}
+
 const quickEmojis = ['😊', '❤️', '🌟', '💪', '🙏', '✨', '🌈', '💐'];
 
 export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
-  const [message, setMessage] = useState('');
-  const [authorName, setAuthorName] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [input, setInput] = useState('');
+  const [step, setStep] = useState<ChatStep>('greeting');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [userMessage, setUserMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Focus input when open
   useEffect(() => {
     if (isOpen && inputRef.current) {
-      inputRef.current.focus();
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
+
+  // Reset on open
+  useEffect(() => {
+    if (isOpen) {
+      setMessages([{ role: 'ai', content: t.aiGreeting }]);
+      setStep('greeting');
+      setUserMessage('');
+      setInput('');
+    }
+  }, [isOpen, t.aiGreeting]);
 
   const generatePosition = (): { x: number; y: number } => ({
     x: 10 + Math.random() * 80,
     y: 60 + Math.random() * 30,
   });
 
-  const handleSubmit = async (inputMessage?: string) => {
-    const finalMessage = inputMessage || message;
-    if (!finalMessage.trim() || isGenerating) return;
+  const addMessage = (role: 'ai' | 'user', content: string) => {
+    setMessages(prev => [...prev, { role, content }]);
+  };
 
-    setIsGenerating(true);
-    setAiResponse(null);
+  const simulateTyping = async (response: string) => {
+    setIsTyping(true);
+    await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
+    setIsTyping(false);
+    addMessage('ai', response);
+  };
 
+  const plantFlower = async (message: string, author: string) => {
     try {
       // Get user's location
       let geoData: { latitude?: number; longitude?: number; country?: string; city?: string } = {};
@@ -59,33 +89,30 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
             city: geo.city,
           };
         }
-      } catch (geoError) {
-        console.log('Could not get location:', geoError);
+      } catch {
+        console.log('Could not get location');
       }
 
       const { data, error } = await supabase.functions.invoke('generate-flower', {
-        body: { message: finalMessage.trim(), author: authorName.trim() || undefined }
+        body: { message: message.trim(), author: author || undefined }
       });
 
-      if (error) {
-        console.error('Error generating flower:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       const flowerType = mapToVisualType(data.flowerType || 'wildflower');
       const flowerInfo = getFlowerInfo(data.flowerType);
-      const processedMessage = data.message || finalMessage.trim();
-      const finalAuthor = authorName.trim() || data.author || t.anonymous;
+      const processedMessage = data.message || message.trim();
+      const finalAuthor = author || data.author || t.anonymous;
       const position = generatePosition();
 
-      // Save to database with location
+      // Save to database
       const { error: insertError } = await supabase
         .from('flowers')
         .insert({
           type: flowerType,
           message: processedMessage,
           author: finalAuthor,
-          mood: finalMessage.trim(),
+          mood: message.trim(),
           x: position.x,
           y: position.y,
           latitude: geoData.latitude,
@@ -94,13 +121,9 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
           city: geoData.city,
         });
 
-      if (insertError) {
-        console.error('Error saving flower:', insertError);
-        throw insertError;
-      }
+      if (insertError) throw insertError;
 
       const flowerName = flowerInfo?.name || flowerType.replace('_', ' ');
-      setAiResponse(`🌸 ${t.plantedFlower} ${flowerName}!`);
       
       onFlowerPlanted({
         type: flowerType,
@@ -110,30 +133,54 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
         y: position.y,
       });
 
-      toast.success('🌱 ' + t.plantedFlower + '!', {
+      toast.success(`🌸 ${t.plantedFlower} ${flowerName}!`, {
         description: t.thankYouPlanting,
       });
 
-      setMessage('');
-      setAuthorName('');
-      
-      setTimeout(() => {
-        setAiResponse(null);
-        setIsOpen(false);
-      }, 2000);
+      // Close dialog after success
+      setTimeout(() => setIsOpen(false), 1500);
 
     } catch (err) {
       console.error('Error:', err);
       toast.error('Failed to plant flower. Please try again.');
-    } finally {
-      setIsGenerating(false);
+      setStep('greeting');
     }
+  };
+
+  const handleSend = async (quickEmoji?: string) => {
+    const text = quickEmoji || input.trim();
+    if (!text || isTyping) return;
+
+    addMessage('user', text);
+    setInput('');
+
+    if (step === 'greeting') {
+      // User shared their mood/message
+      setUserMessage(text);
+      await simulateTyping(t.aiAskName);
+      setStep('askName');
+    } else if (step === 'askName') {
+      // User provided name (or skip)
+      setStep('planting');
+      await simulateTyping(t.aiThankYou);
+      await plantFlower(userMessage, text);
+      setStep('done');
+    }
+  };
+
+  const handleSkipName = async () => {
+    if (isTyping) return;
+    addMessage('user', `✨ ${t.skipName}`);
+    setStep('planting');
+    await simulateTyping(t.aiThankYou);
+    await plantFlower(userMessage, '');
+    setStep('done');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit();
+      handleSend();
     }
   };
 
@@ -167,10 +214,7 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
               <span className="flex items-center gap-3">
                 <motion.span 
                   className="text-xl"
-                  animate={{ 
-                    scale: [1, 1.1, 1],
-                    rotate: [0, 5, -5, 0] 
-                  }}
+                  animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
                   transition={{ duration: 3, repeat: Infinity }}
                 >
                   🌱
@@ -185,13 +229,13 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full sm:w-[420px] max-w-[calc(100vw-2rem)]"
+            className="relative w-full sm:w-[380px] max-w-[calc(100vw-2rem)]"
             style={{
-              background: 'rgba(255, 255, 255, 0.2)',
+              background: 'rgba(255, 255, 255, 0.18)',
               backdropFilter: 'blur(40px)',
               WebkitBackdropFilter: 'blur(40px)',
-              borderRadius: '24px',
-              border: '1px solid rgba(255, 255, 255, 0.35)',
+              borderRadius: '20px',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
               boxShadow: '0 24px 80px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
               overflow: 'hidden',
             }}
@@ -200,129 +244,146 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-white/60 hover:text-white transition-colors rounded-full hover:bg-white/10 z-10"
-              disabled={isGenerating}
+              className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center text-white/50 hover:text-white transition-colors rounded-full hover:bg-white/10 z-10"
             >
               ✕
             </button>
 
-            {/* Content */}
-            <div className="p-6 space-y-4">
-              {/* AI Response */}
-              <AnimatePresence>
-                {aiResponse && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="p-4 rounded-2xl text-center"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.2)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                    }}
+            {/* Chat messages */}
+            <div className="max-h-[280px] overflow-y-auto p-4 space-y-3">
+              {messages.map((msg, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[85%] px-3 py-2 rounded-2xl text-sm font-body ${
+                      msg.role === 'user' 
+                        ? 'bg-white/25 text-white rounded-br-md' 
+                        : 'bg-white/10 text-white/90 rounded-bl-md'
+                    }`}
+                    style={{ textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}
                   >
-                    <p className="text-white font-body" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
-                      {aiResponse}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    {msg.content}
+                  </div>
+                </motion.div>
+              ))}
+              
+              {/* Typing indicator */}
+              {isTyping && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex justify-start"
+                >
+                  <div className="px-3 py-2 rounded-2xl rounded-bl-md bg-white/10">
+                    <motion.span
+                      className="flex gap-1"
+                      animate={{ opacity: [0.4, 1, 0.4] }}
+                      transition={{ duration: 1.2, repeat: Infinity }}
+                    >
+                      <span className="w-1.5 h-1.5 bg-white/60 rounded-full" />
+                      <span className="w-1.5 h-1.5 bg-white/60 rounded-full" />
+                      <span className="w-1.5 h-1.5 bg-white/60 rounded-full" />
+                    </motion.span>
+                  </div>
+                </motion.div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
 
-              {/* Quick emoji buttons */}
-              <div className="flex flex-wrap gap-2 justify-center">
+            {/* Quick emojis - only show in greeting step */}
+            {step === 'greeting' && (
+              <div className="px-4 pb-2 flex flex-wrap gap-1.5 justify-center">
                 {quickEmojis.map((emoji) => (
                   <motion.button
                     key={emoji}
                     type="button"
-                    onClick={() => handleSubmit(emoji)}
-                    disabled={isGenerating}
-                    className="w-10 h-10 flex items-center justify-center rounded-full text-xl transition-all disabled:opacity-50"
+                    onClick={() => handleSend(emoji)}
+                    disabled={isTyping}
+                    className="w-9 h-9 flex items-center justify-center rounded-full text-lg transition-all disabled:opacity-50"
                     style={{
-                      background: 'rgba(255, 255, 255, 0.15)',
-                      border: '1px solid rgba(255, 255, 255, 0.25)',
+                      background: 'rgba(255, 255, 255, 0.12)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
                     }}
-                    whileHover={{ scale: 1.1, background: 'rgba(255, 255, 255, 0.25)' }}
+                    whileHover={{ scale: 1.1, background: 'rgba(255, 255, 255, 0.2)' }}
                     whileTap={{ scale: 0.95 }}
                   >
                     {emoji}
                   </motion.button>
                 ))}
               </div>
+            )}
 
-              {/* Combined input area - message + name in one section */}
-              <div className="space-y-3">
-                {/* Message input */}
+            {/* Input area */}
+            <div className="p-3 pt-2" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <div className="flex gap-2">
                 <div 
-                  className="flex items-center gap-3 p-3 rounded-2xl"
+                  className="flex-1 flex items-center px-3 py-2 rounded-xl"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.15)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    background: 'rgba(255, 255, 255, 0.12)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
                   }}
                 >
                   <input
                     ref={inputRef}
                     type="text"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={t.shareMoodPlaceholder}
-                    disabled={isGenerating}
-                    className="flex-1 bg-transparent text-white placeholder:text-white/50 font-body text-sm outline-none"
+                    placeholder={step === 'askName' ? t.anonymous : t.shareMoodPlaceholder}
+                    disabled={isTyping || step === 'planting' || step === 'done'}
+                    className="flex-1 bg-transparent text-white placeholder:text-white/40 font-body text-sm outline-none"
                     style={{ textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}
                     maxLength={200}
                   />
                 </div>
 
-                {/* Name input + submit in same row */}
-                <div className="flex gap-2">
-                  <div 
-                    className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                    }}
-                  >
-                    <span className="text-white/50 text-xs">✍️</span>
-                    <input
-                      type="text"
-                      value={authorName}
-                      onChange={(e) => setAuthorName(e.target.value)}
-                      placeholder={t.yourNamePlaceholder}
-                      disabled={isGenerating}
-                      className="flex-1 bg-transparent text-white placeholder:text-white/40 font-body text-xs outline-none"
-                      maxLength={50}
-                    />
-                  </div>
+                {/* Skip name button */}
+                {step === 'askName' && !isTyping && (
                   <motion.button
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     type="button"
-                    onClick={() => handleSubmit()}
-                    disabled={!message.trim() || isGenerating}
-                    className="px-5 py-2 rounded-xl text-white text-sm font-body disabled:opacity-40 transition-all flex items-center gap-2"
+                    onClick={handleSkipName}
+                    className="px-3 py-2 rounded-xl text-white/70 text-xs font-body hover:text-white transition-colors"
                     style={{
-                      background: message.trim() ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                     }}
-                    whileHover={message.trim() ? { scale: 1.02 } : {}}
-                    whileTap={message.trim() ? { scale: 0.98 } : {}}
+                    whileHover={{ background: 'rgba(255, 255, 255, 0.12)' }}
                   >
-                    {isGenerating ? (
-                      <motion.span
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                      >
-                        ✨
-                      </motion.span>
-                    ) : (
-                      <>🌱</>
-                    )}
-                    {t.plantFlower.split(' ')[0]}
+                    {t.skipName}
                   </motion.button>
-                </div>
-              </div>
+                )}
 
-              <p className="text-center text-white/50 text-xs font-body">
-                {t.aiChooseFlower}
-              </p>
+                {/* Send button */}
+                <motion.button
+                  type="button"
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || isTyping || step === 'planting' || step === 'done'}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white disabled:opacity-30 transition-all"
+                  style={{
+                    background: input.trim() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                  }}
+                  whileHover={input.trim() ? { scale: 1.05 } : {}}
+                  whileTap={input.trim() ? { scale: 0.95 } : {}}
+                >
+                  {step === 'planting' ? (
+                    <motion.span
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    >
+                      ✨
+                    </motion.span>
+                  ) : (
+                    <span>🌱</span>
+                  )}
+                </motion.button>
+              </div>
             </div>
           </motion.div>
         )}

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, X, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { FlowerType } from './ImpressionistFlower';
 import { getFlowerEmoji } from '@/lib/flowerDatabase';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -74,7 +75,7 @@ export const FlowerCard = ({ isOpen, onClose, flower }: FlowerCardProps) => {
       }
     } else {
       await navigator.clipboard.writeText(shareText);
-      alert(t.messageCopied);
+      toast.success(t.messageCopied);
     }
   };
 

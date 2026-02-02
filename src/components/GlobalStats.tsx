@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, ChevronDown, X } from 'lucide-react';
-import { FlowerData } from './Garden';
+import { FlowerData } from '@/hooks/useGlobalFlowers';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Language, languageNames } from '@/lib/i18n';
 
@@ -47,7 +47,6 @@ export const GlobalStats = ({ flowerCount, flowers }: GlobalStatsProps) => {
   
   const flowersWithLocation = flowers.filter(f => f.latitude != null && f.longitude != null);
   const locationGroups = groupFlowersByLocation(flowersWithLocation);
-  const uniqueCountries = [...new Set(flowers.filter(f => f.country).map(f => f.country))].length;
 
   return (
     <>
@@ -58,21 +57,20 @@ export const GlobalStats = ({ flowerCount, flowers }: GlobalStatsProps) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        {/* Language Selector */}
+        {/* Language Selector - Mini */}
         <div className="relative">
           <motion.button
             onClick={() => setIsLangOpen(!isLangOpen)}
-            className="px-3 py-2 rounded-full flex items-center gap-1.5 text-white/80 hover:text-white transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors"
             style={{
-              background: 'rgba(255, 255, 255, 0.12)',
+              background: 'rgba(255, 255, 255, 0.1)',
               backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
             }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <span className="text-sm font-body">{languageNames[language].slice(0, 2)}</span>
-            <ChevronDown size={12} className={`transition-transform ${isLangOpen ? 'rotate-180' : ''}`} />
+            <span className="text-xs font-body">{language.toUpperCase()}</span>
           </motion.button>
           
           <AnimatePresence>
@@ -86,14 +84,14 @@ export const GlobalStats = ({ flowerCount, flowers }: GlobalStatsProps) => {
                   background: 'rgba(255, 255, 255, 0.15)',
                   backdropFilter: 'blur(20px)',
                   border: '1px solid rgba(255, 255, 255, 0.2)',
-                  minWidth: '120px',
+                  minWidth: '100px',
                 }}
               >
                 {(Object.keys(languageNames) as Language[]).map((lang) => (
                   <button
                     key={lang}
                     onClick={() => { setLanguage(lang); setIsLangOpen(false); }}
-                    className={`w-full px-4 py-2 text-left text-sm font-body transition-colors ${
+                    className={`w-full px-3 py-1.5 text-left text-xs font-body transition-colors ${
                       language === lang ? 'text-white bg-white/20' : 'text-white/70 hover:text-white hover:bg-white/10'
                     }`}
                   >
@@ -105,31 +103,23 @@ export const GlobalStats = ({ flowerCount, flowers }: GlobalStatsProps) => {
           </AnimatePresence>
         </div>
 
-        {/* Main Stats + Map Button */}
+        {/* Flower Count - Click to open map */}
         <motion.button
           onClick={() => setIsMapOpen(true)}
-          className="px-4 py-2 rounded-full flex items-center gap-3"
+          className="px-3 py-1.5 rounded-full flex items-center gap-2"
           style={{
-            background: 'rgba(255, 255, 255, 0.15)',
+            background: 'rgba(255, 255, 255, 0.12)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.25)',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
           }}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: 1.03, background: 'rgba(255, 255, 255, 0.18)' }}
+          whileTap={{ scale: 0.97 }}
         >
-          <span className="text-lg">🌸</span>
+          <span className="text-base">🌸</span>
           <span className="text-white font-body text-sm" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
             {flowerCount}
           </span>
-          <div className="w-px h-4 bg-white/20" />
-          <Globe size={14} className="text-white/80" />
-          {uniqueCountries > 0 && (
-            <span className="text-white/70 font-body text-xs">
-              {uniqueCountries}
-            </span>
-          )}
         </motion.button>
       </motion.div>
 
@@ -148,13 +138,13 @@ export const GlobalStats = ({ flowerCount, flowers }: GlobalStatsProps) => {
             />
 
             <motion.div
-              className="relative z-10 w-full max-w-3xl"
+              className="relative z-10 w-full max-w-2xl"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
             >
               <div
-                className="rounded-3xl overflow-hidden"
+                className="rounded-2xl overflow-hidden"
                 style={{
                   background: 'rgba(255, 255, 255, 0.15)',
                   backdropFilter: 'blur(40px)',
@@ -165,33 +155,31 @@ export const GlobalStats = ({ flowerCount, flowers }: GlobalStatsProps) => {
               >
                 {/* Header */}
                 <div
-                  className="px-5 py-3 flex items-center justify-between"
+                  className="px-4 py-3 flex items-center justify-between"
                   style={{
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-                    background: 'rgba(255, 255, 255, 0.1)',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
+                    background: 'rgba(255, 255, 255, 0.08)',
                   }}
                 >
-                  <div className="flex items-center gap-3">
-                    <Globe className="w-5 h-5 text-white" />
-                    <div>
-                      <h3 className="text-white font-display text-base">{t.globalGarden}</h3>
-                      <p className="text-white/60 text-xs font-body">
-                        {flowersWithLocation.length} {t.flowersFromWorld}
-                      </p>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-white/80" />
+                    <h3 className="text-white font-display text-sm">{t.globalGarden}</h3>
+                    <span className="text-white/50 text-xs font-body">
+                      · {flowersWithLocation.length} {t.flowersFromWorld}
+                    </span>
                   </div>
                   <button
                     onClick={() => setIsMapOpen(false)}
-                    className="w-8 h-8 flex items-center justify-center text-white/60 hover:text-white transition-colors rounded-full hover:bg-white/10"
+                    className="w-7 h-7 flex items-center justify-center text-white/50 hover:text-white transition-colors rounded-full hover:bg-white/10"
                   >
-                    <X size={18} />
+                    <X size={16} />
                   </button>
                 </div>
 
                 {/* Map Area */}
-                <div className="relative aspect-[2/1] min-h-[250px]">
+                <div className="relative aspect-[2/1] min-h-[200px]">
                   {/* Simplified world map */}
-                  <svg viewBox="0 0 100 50" className="absolute inset-0 w-full h-full" style={{ opacity: 0.25 }}>
+                  <svg viewBox="0 0 100 50" className="absolute inset-0 w-full h-full" style={{ opacity: 0.2 }}>
                     <path d="M10,15 Q15,10 25,12 L30,18 Q25,25 15,22 Z" fill="white" />
                     <path d="M45,8 Q55,5 65,10 L70,20 Q60,28 50,25 L45,15 Z" fill="white" />
                     <path d="M72,15 Q80,12 90,18 L88,30 Q80,35 75,28 Z" fill="white" />
@@ -214,29 +202,29 @@ export const GlobalStats = ({ flowerCount, flowers }: GlobalStatsProps) => {
                         }}
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: index * 0.03 }}
+                        transition={{ delay: index * 0.02 }}
                       >
                         <motion.div
                           className="relative"
-                          animate={{ scale: [1, 1.15, 1] }}
-                          transition={{ duration: 2.5, repeat: Infinity, delay: index * 0.15 }}
+                          animate={{ scale: [1, 1.1, 1] }}
+                          transition={{ duration: 2.5, repeat: Infinity, delay: index * 0.1 }}
                         >
                           <div
-                            className="w-3 h-3 rounded-full flex items-center justify-center"
+                            className="w-2.5 h-2.5 rounded-full flex items-center justify-center"
                             style={{
                               background: 'linear-gradient(135deg, #FF6B9D 0%, #C44DFF 100%)',
-                              boxShadow: '0 0 12px rgba(255, 107, 157, 0.6)',
-                              fontSize: '8px',
+                              boxShadow: '0 0 10px rgba(255, 107, 157, 0.5)',
+                              fontSize: '7px',
                             }}
                           >
                             🌸
                           </div>
                           {group.count > 1 && (
                             <div
-                              className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-white flex items-center justify-center font-bold"
-                              style={{ color: '#C44DFF', fontSize: '8px' }}
+                              className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-white flex items-center justify-center font-bold"
+                              style={{ color: '#C44DFF', fontSize: '7px' }}
                             >
-                              {group.count > 9 ? '9+' : group.count}
+                              {group.count > 9 ? '+' : group.count}
                             </div>
                           )}
                         </motion.div>
@@ -247,10 +235,10 @@ export const GlobalStats = ({ flowerCount, flowers }: GlobalStatsProps) => {
                   {/* Empty state */}
                   {flowersWithLocation.length === 0 && (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center text-white/60">
-                        <Globe className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                        <p className="font-body text-sm">{t.noLocationData}</p>
-                        <p className="text-xs">{t.plantToAdd}</p>
+                      <div className="text-center text-white/50">
+                        <Globe className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                        <p className="font-body text-xs">{t.noLocationData}</p>
+                        <p className="text-xs opacity-60">{t.plantToAdd}</p>
                       </div>
                     </div>
                   )}
@@ -258,16 +246,16 @@ export const GlobalStats = ({ flowerCount, flowers }: GlobalStatsProps) => {
 
                 {/* Footer */}
                 <div
-                  className="px-5 py-3 flex items-center justify-between"
+                  className="px-4 py-2 flex items-center justify-between"
                   style={{
-                    borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.15)',
                     background: 'rgba(255, 255, 255, 0.05)',
                   }}
                 >
-                  <p className="text-white/50 text-xs font-body">
+                  <p className="text-white/40 text-xs font-body">
                     🌸 {t.eachDotRepresents}
                   </p>
-                  <p className="text-white/40 text-xs font-body">
+                  <p className="text-white/50 text-xs font-body">
                     {t.totalFlowers}: {flowerCount}
                   </p>
                 </div>
