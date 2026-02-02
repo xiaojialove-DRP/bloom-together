@@ -1,20 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ImpressionistFlower, FlowerType } from './ImpressionistFlower';
+import { ImpressionistFlower } from './ImpressionistFlower';
 import { useLanguage } from '@/hooks/useLanguage';
+import { FlowerData } from '@/hooks/useGlobalFlowers';
 
-export interface FlowerData {
-  id: string;
-  type: FlowerType;
-  message: string;
-  author: string;
-  x: number;
-  y: number;
-  createdAt: number;
-  latitude?: number;
-  longitude?: number;
-  country?: string;
-  city?: string;
-}
+// Re-export for backwards compatibility
+export type { FlowerData };
 
 interface GardenProps {
   flowers: FlowerData[];

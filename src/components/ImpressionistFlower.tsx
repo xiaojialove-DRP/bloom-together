@@ -236,29 +236,31 @@ export const ImpressionistFlower = forwardRef<HTMLDivElement, FlowerProps>(
         </motion.div>
         
         {/* Message tooltip - elegant white card */}
-        {isHovered && stage === 'bloom' && (
-          <motion.div 
-            className="absolute bottom-full left-1/2 mb-3 px-5 py-4 rounded-xl bg-white/98 backdrop-blur-sm border border-white shadow-xl min-w-[150px] max-w-[240px] z-50"
-            style={{ 
-              boxShadow: `0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px ${colors.shadow}`,
-              transform: 'translateX(-50%)',
-            }}
-            initial={{ opacity: 0, y: 10, scale: 0.92 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.92 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-          >
-            <p className="text-sm text-foreground text-center leading-relaxed font-body">{message}</p>
-            {author && (
-              <p className="text-xs text-muted-foreground text-center mt-2 font-body italic">— {author}</p>
-            )}
-            
-            <div 
-              className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rotate-45 border-r border-b border-white/50"
-              style={{ boxShadow: '2px 2px 4px rgba(0,0,0,0.05)' }}
-            />
-          </motion.div>
-        )}
+        <AnimatePresence>
+          {isHovered && stage === 'bloom' && (
+            <motion.div 
+              className="absolute bottom-full left-1/2 mb-3 px-5 py-4 rounded-xl bg-white/98 backdrop-blur-sm border border-white shadow-xl min-w-[150px] max-w-[240px] z-50"
+              style={{ 
+                boxShadow: `0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px ${colors.shadow}`,
+                transform: 'translateX(-50%)',
+              }}
+              initial={{ opacity: 0, y: 10, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.92 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+            >
+              <p className="text-sm text-foreground text-center leading-relaxed font-body">{message}</p>
+              {author && (
+                <p className="text-xs text-muted-foreground text-center mt-2 font-body italic">— {author}</p>
+              )}
+              
+              <div 
+                className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rotate-45 border-r border-b border-white/50"
+                style={{ boxShadow: '2px 2px 4px rgba(0,0,0,0.05)' }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     );
   }
