@@ -93,14 +93,36 @@ serve(async (req) => {
   try {
     const { message, author } = await req.json();
     
-    if (!message) {
+    // Input validation - type check
+    if (!message || typeof message !== 'string') {
       return new Response(
-        JSON.stringify({ error: 'Message is required' }),
+        JSON.stringify({ error: 'Message must be a non-empty string' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const userAuthor = author || 'Anonymous';
+    // Enforce length limit (matches client-side 200 char limit)
+    if (message.length > 200) {
+      return new Response(
+        JSON.stringify({ error: 'Message must be 200 characters or less' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Sanitize: trim whitespace and remove control characters
+    const sanitizedMessage = message.trim().replace(/[\x00-\x1F\x7F]/g, '');
+
+    if (!sanitizedMessage) {
+      return new Response(
+        JSON.stringify({ error: 'Message cannot be empty' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate author if provided
+    const userAuthor = (author && typeof author === 'string') 
+      ? author.trim().slice(0, 50).replace(/[\x00-\x1F\x7F]/g, '') || 'Anonymous'
+      : 'Anonymous';
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -110,7 +132,7 @@ serve(async (req) => {
         JSON.stringify({ 
           flowerType: randomFlower,
           author: userAuthor,
-          message: message
+          message: sanitizedMessage
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -156,7 +178,7 @@ Match emotions and themes to flowers:
         model: 'google/gemini-3-flash-preview',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: message }
+          { role: 'user', content: sanitizedMessage }
         ],
         temperature: 0.7,
         max_tokens: 200,
@@ -185,7 +207,7 @@ Match emotions and themes to flowers:
         JSON.stringify({ 
           flowerType: randomFlower,
           author: userAuthor,
-          message: message
+          message: sanitizedMessage
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -217,7 +239,7 @@ Match emotions and themes to flowers:
       return new Response(
         JSON.stringify({
           flowerType,
-          message: parsed.message || message,
+          message: parsed.message || sanitizedMessage,
           author: userAuthor
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -227,16 +249,23 @@ Match emotions and themes to flowers:
       return new Response(
         JSON.stringify({ 
           flowerType: randomFlower,
-          message: message,
+          message: sanitizedMessage,
           author: userAuthor
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
   } catch (error) {
-    console.error('Error:', error);
+    // Log full error details server-side for debugging
+    console.error('Error in generate-flower function:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Return generic error to client (no internal details)
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: 'Unable to process your request. Please try again later.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
