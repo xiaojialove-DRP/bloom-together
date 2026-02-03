@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, ChevronDown, X } from 'lucide-react';
+import { Globe, X } from 'lucide-react';
 import { FlowerData } from '@/hooks/useGlobalFlowers';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Language, languageNames } from '@/lib/i18n';
@@ -45,8 +45,14 @@ export const GlobalStats = ({ flowerCount, flowers }: GlobalStatsProps) => {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   
+  // Memoized calculation
   const flowersWithLocation = flowers.filter(f => f.latitude != null && f.longitude != null);
   const locationGroups = groupFlowersByLocation(flowersWithLocation);
+  
+  // Close language dropdown when clicking elsewhere
+  const handleClickOutside = useCallback(() => {
+    if (isLangOpen) setIsLangOpen(false);
+  }, [isLangOpen]);
 
   return (
     <>

@@ -16,7 +16,7 @@ interface ChatDialogProps {
   }) => void;
 }
 
-type ChatStep = 'greeting' | 'askName' | 'planting' | 'done';
+type ChatStep = 'greeting' | 'askFlower' | 'askName' | 'planting' | 'done';
 
 interface ChatMessage {
   role: 'ai' | 'user';
@@ -31,7 +31,8 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
   const [input, setInput] = useState('');
   const [step, setStep] = useState<ChatStep>('greeting');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [userMessage, setUserMessage] = useState('');
+  const [userMood, setUserMood] = useState('');
+  const [userFlowerChoice, setUserFlowerChoice] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -53,7 +54,8 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
     if (isOpen) {
       setMessages([{ role: 'ai', content: t.aiGreeting }]);
       setStep('greeting');
-      setUserMessage('');
+      setUserMood('');
+      setUserFlowerChoice('');
       setInput('');
     }
   }, [isOpen, t.aiGreeting]);
@@ -67,14 +69,14 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
     setMessages(prev => [...prev, { role, content }]);
   };
 
-  const simulateTyping = async (response: string) => {
+  const simulateTyping = async (response: string, delay = 600) => {
     setIsTyping(true);
-    await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
+    await new Promise(r => setTimeout(r, delay + Math.random() * 400));
     setIsTyping(false);
     addMessage('ai', response);
   };
 
-  const plantFlower = async (message: string, author: string) => {
+  const plantFlower = async (mood: string, flowerChoice: string, author: string) => {
     try {
       // Get user's location
       let geoData: { latitude?: number; longitude?: number; country?: string; city?: string } = {};
@@ -93,15 +95,18 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
         console.log('Could not get location');
       }
 
+      // Combine mood and flower choice for the message
+      const combinedMessage = flowerChoice ? `${mood} (${flowerChoice})` : mood;
+
       const { data, error } = await supabase.functions.invoke('generate-flower', {
-        body: { message: message.trim(), author: author || undefined }
+        body: { message: combinedMessage.trim(), author: author || undefined }
       });
 
       if (error) throw error;
 
       const flowerType = mapToVisualType(data.flowerType || 'wildflower');
       const flowerInfo = getFlowerInfo(data.flowerType);
-      const processedMessage = data.message || message.trim();
+      const processedMessage = data.message || mood.trim();
       const finalAuthor = author || data.author || t.anonymous;
       const position = generatePosition();
 
@@ -112,7 +117,7 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
           type: flowerType,
           message: processedMessage,
           author: finalAuthor,
-          mood: message.trim(),
+          mood: mood.trim(),
           x: position.x,
           y: position.y,
           latitude: geoData.latitude,
@@ -155,25 +160,38 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
     setInput('');
 
     if (step === 'greeting') {
-      // User shared their mood/message
-      setUserMessage(text);
-      await simulateTyping(t.aiAskName);
+      // User shared their mood
+      setUserMood(text);
+      await simulateTyping(t.aiAskFlower);
+      setStep('askFlower');
+    } else if (step === 'askFlower') {
+      // User described their flower choice (or said "let AI choose")
+      setUserFlowerChoice(text);
+      await simulateTyping(t.aiAskName, 500);
       setStep('askName');
     } else if (step === 'askName') {
-      // User provided name (or skip)
+      // User provided name
       setStep('planting');
-      await simulateTyping(t.aiThankYou);
-      await plantFlower(userMessage, text);
+      await simulateTyping(t.aiThankYou, 400);
+      await plantFlower(userMood, userFlowerChoice, text);
       setStep('done');
     }
+  };
+
+  const handleSkipFlower = async () => {
+    if (isTyping) return;
+    addMessage('user', '✨ Let AI choose');
+    setUserFlowerChoice('');
+    await simulateTyping(t.aiAskName, 500);
+    setStep('askName');
   };
 
   const handleSkipName = async () => {
     if (isTyping) return;
     addMessage('user', `✨ ${t.skipName}`);
     setStep('planting');
-    await simulateTyping(t.aiThankYou);
-    await plantFlower(userMessage, '');
+    await simulateTyping(t.aiThankYou, 400);
+    await plantFlower(userMood, userFlowerChoice, '');
     setStep('done');
   };
 
@@ -182,6 +200,59 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const getPlaceholder = () => {
+    switch (step) {
+      case 'greeting':
+        return t.shareMoodPlaceholder;
+      case 'askFlower':
+        return 'Rose, Sunflower, or describe...';
+      case 'askName':
+        return t.namePlaceholder;
+      default:
+        return '...';
+    }
+  };
+
+  const getSkipButton = () => {
+    if (step === 'askFlower' && !isTyping) {
+      return (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          type="button"
+          onClick={handleSkipFlower}
+          className="px-3 py-2 rounded-xl text-white/70 text-xs font-body hover:text-white transition-colors whitespace-nowrap"
+          style={{
+            background: 'rgba(255, 255, 255, 0.08)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+          whileHover={{ background: 'rgba(255, 255, 255, 0.12)' }}
+        >
+          AI choose
+        </motion.button>
+      );
+    }
+    if (step === 'askName' && !isTyping) {
+      return (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          type="button"
+          onClick={handleSkipName}
+          className="px-3 py-2 rounded-xl text-white/70 text-xs font-body hover:text-white transition-colors whitespace-nowrap"
+          style={{
+            background: 'rgba(255, 255, 255, 0.08)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+          whileHover={{ background: 'rgba(255, 255, 255, 0.12)' }}
+        >
+          {t.skipName}
+        </motion.button>
+      );
+    }
+    return null;
   };
 
   return (
@@ -229,12 +300,12 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full sm:w-[380px] max-w-[calc(100vw-2rem)]"
+            className="relative w-full sm:w-[400px] max-w-[calc(100vw-2rem)]"
             style={{
               background: 'rgba(255, 255, 255, 0.18)',
               backdropFilter: 'blur(40px)',
               WebkitBackdropFilter: 'blur(40px)',
-              borderRadius: '20px',
+              borderRadius: '24px',
               border: '1px solid rgba(255, 255, 255, 0.3)',
               boxShadow: '0 24px 80px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
               overflow: 'hidden',
@@ -249,8 +320,24 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
               ✕
             </button>
 
+            {/* Step indicator */}
+            <div className="px-4 pt-4 pb-2">
+              <div className="flex justify-center gap-2">
+                {['greeting', 'askFlower', 'askName'].map((s, i) => (
+                  <div
+                    key={s}
+                    className={`h-1 rounded-full transition-all duration-300 ${
+                      ['greeting', 'askFlower', 'askName', 'planting', 'done'].indexOf(step) >= i
+                        ? 'bg-white/60 w-8'
+                        : 'bg-white/20 w-4'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
             {/* Chat messages */}
-            <div className="max-h-[280px] overflow-y-auto p-4 space-y-3">
+            <div className="max-h-[300px] overflow-y-auto px-4 pb-2 space-y-3">
               {messages.map((msg, i) => (
                 <motion.div
                   key={i}
@@ -259,7 +346,7 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[85%] px-3 py-2 rounded-2xl text-sm font-body ${
+                    className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm font-body leading-relaxed ${
                       msg.role === 'user' 
                         ? 'bg-white/25 text-white rounded-br-md' 
                         : 'bg-white/10 text-white/90 rounded-bl-md'
@@ -278,7 +365,7 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
                   animate={{ opacity: 1 }}
                   className="flex justify-start"
                 >
-                  <div className="px-3 py-2 rounded-2xl rounded-bl-md bg-white/10">
+                  <div className="px-4 py-2.5 rounded-2xl rounded-bl-md bg-white/10">
                     <motion.span
                       className="flex gap-1"
                       animate={{ opacity: [0.4, 1, 0.4] }}
@@ -318,10 +405,10 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
             )}
 
             {/* Input area */}
-            <div className="p-3 pt-2" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+            <div className="p-4 pt-2" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
               <div className="flex gap-2">
                 <div 
-                  className="flex-1 flex items-center px-3 py-2 rounded-xl"
+                  className="flex-1 flex items-center px-4 py-2.5 rounded-xl"
                   style={{
                     background: 'rgba(255, 255, 255, 0.12)',
                     border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -333,7 +420,7 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={step === 'askName' ? t.anonymous : t.shareMoodPlaceholder}
+                    placeholder={getPlaceholder()}
                     disabled={isTyping || step === 'planting' || step === 'done'}
                     className="flex-1 bg-transparent text-white placeholder:text-white/40 font-body text-sm outline-none"
                     style={{ textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}
@@ -341,23 +428,8 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
                   />
                 </div>
 
-                {/* Skip name button */}
-                {step === 'askName' && !isTyping && (
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    type="button"
-                    onClick={handleSkipName}
-                    className="px-3 py-2 rounded-xl text-white/70 text-xs font-body hover:text-white transition-colors"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                    }}
-                    whileHover={{ background: 'rgba(255, 255, 255, 0.12)' }}
-                  >
-                    {t.skipName}
-                  </motion.button>
-                )}
+                {/* Skip button */}
+                {getSkipButton()}
 
                 {/* Send button */}
                 <motion.button
@@ -380,7 +452,7 @@ export const ChatDialog = ({ onFlowerPlanted }: ChatDialogProps) => {
                       ✨
                     </motion.span>
                   ) : (
-                    <span>🌱</span>
+                    <span>→</span>
                   )}
                 </motion.button>
               </div>
