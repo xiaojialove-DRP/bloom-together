@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ImpressionistBackground } from '@/components/ImpressionistBackground';
 import { Garden, FlowerData } from '@/components/Garden';
@@ -15,6 +15,17 @@ const Index = () => {
   const { flowers, addLocalFlower, isLoaded } = useGlobalFlowers();
   const [selectedFlower, setSelectedFlower] = useState<FlowerData | null>(null);
   const [isCardOpen, setIsCardOpen] = useState(false);
+  const [newlyPlantedId, setNewlyPlantedId] = useState<string | null>(null);
+
+  // Auto-clear highlight after some time
+  useEffect(() => {
+    if (newlyPlantedId) {
+      const timer = setTimeout(() => {
+        setNewlyPlantedId(null);
+      }, 8000); // Highlight lasts 8 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [newlyPlantedId]);
 
   const handleFlowerPlanted = (flower: {
     type: FlowerType;
@@ -23,7 +34,17 @@ const Index = () => {
     x: number;
     y: number;
   }) => {
-    addLocalFlower(flower);
+    const newFlower = addLocalFlower(flower);
+    
+    // Auto-show the flower card for the newly planted flower
+    if (newFlower) {
+      setNewlyPlantedId(newFlower.id);
+      setSelectedFlower(newFlower);
+      // Delay opening card to let the flower bloom animation play
+      setTimeout(() => {
+        setIsCardOpen(true);
+      }, 1800);
+    }
   };
 
   const handleFlowerClick = (flower: FlowerData) => {
@@ -72,7 +93,13 @@ const Index = () => {
       </motion.header>
       
       {/* Garden */}
-      {isLoaded && <Garden flowers={flowers} onFlowerClick={handleFlowerClick} />}
+      {isLoaded && (
+        <Garden 
+          flowers={flowers} 
+          onFlowerClick={handleFlowerClick}
+          highlightedFlowerId={newlyPlantedId}
+        />
+      )}
       
       {/* Chat Dialog */}
       <ChatDialog onFlowerPlanted={handleFlowerPlanted} />
@@ -82,6 +109,7 @@ const Index = () => {
         isOpen={isCardOpen} 
         onClose={() => setIsCardOpen(false)} 
         flower={selectedFlower}
+        isNewlyPlanted={selectedFlower?.id === newlyPlantedId}
       />
     </div>
   );

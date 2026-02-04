@@ -11,6 +11,7 @@ interface FlowerProps {
   y: number;
   delay?: number;
   onClick?: () => void;
+  isHighlighted?: boolean;
 }
 
 const flowerColors: Record<FlowerType, { primary: string; secondary: string; shadow: string }> = {
@@ -48,7 +49,7 @@ const flowerColors: Record<FlowerType, { primary: string; secondary: string; sha
 
 // Using forwardRef to fix AnimatePresence warning in Garden component
 export const ImpressionistFlower = forwardRef<HTMLDivElement, FlowerProps>(
-  ({ type, message, author, x, y, delay = 0, onClick }, ref) => {
+  ({ type, message, author, x, y, delay = 0, onClick, isHighlighted = false }, ref) => {
     const [stage, setStage] = useState<'seed' | 'sprout' | 'bloom'>('seed');
     const [isHovered, setIsHovered] = useState(false);
     const colors = flowerColors[type];
@@ -214,14 +215,42 @@ export const ImpressionistFlower = forwardRef<HTMLDivElement, FlowerProps>(
           transform: 'translate(-50%, -100%)',
         }}
         initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
+        animate={{ 
+          scale: isHighlighted ? [1, 1.15, 1] : 1, 
+          opacity: 1,
+        }}
         exit={{ scale: 0, opacity: 0 }}
         whileHover={{ scale: 1.08 }}
-        transition={{ duration: 0.3 }}
+        transition={{ 
+          duration: isHighlighted ? 1.5 : 0.3,
+          repeat: isHighlighted ? Infinity : 0,
+          ease: "easeInOut",
+        }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={onClick}
       >
+        {/* Glow effect for highlighted flower */}
+        {isHighlighted && (
+          <motion.div
+            className="absolute inset-0 rounded-full"
+            style={{
+              background: `radial-gradient(circle, ${colors.shadow} 0%, transparent 70%)`,
+              filter: 'blur(15px)',
+              transform: 'scale(2.5) translateY(-20%)',
+            }}
+            animate={{
+              opacity: [0.6, 1, 0.6],
+              scale: [2.2, 2.8, 2.2],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        )}
+        
         <motion.div
           animate={{
             rotate: [-2, 2, -2],
@@ -231,6 +260,7 @@ export const ImpressionistFlower = forwardRef<HTMLDivElement, FlowerProps>(
             repeat: Infinity,
             ease: "easeInOut",
           }}
+          className="relative z-10"
         >
           {renderFlower()}
         </motion.div>

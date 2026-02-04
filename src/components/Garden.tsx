@@ -9,9 +9,10 @@ export type { FlowerData };
 interface GardenProps {
   flowers: FlowerData[];
   onFlowerClick?: (flower: FlowerData) => void;
+  highlightedFlowerId?: string | null;
 }
 
-export const Garden = ({ flowers, onFlowerClick }: GardenProps) => {
+export const Garden = ({ flowers, onFlowerClick, highlightedFlowerId }: GardenProps) => {
   const { t } = useLanguage();
   
   return (
@@ -28,6 +29,7 @@ export const Garden = ({ flowers, onFlowerClick }: GardenProps) => {
             y={flower.y}
             delay={index * 80}
             onClick={() => onFlowerClick?.(flower)}
+            isHighlighted={flower.id === highlightedFlowerId}
           />
         ))}
       </AnimatePresence>
