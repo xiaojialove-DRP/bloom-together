@@ -113,13 +113,14 @@ export const useGlobalFlowers = () => {
     };
   }, []);
 
-  const addLocalFlower = (flower: Omit<FlowerData, 'id' | 'createdAt'>) => {
+  const addLocalFlower = (flower: Omit<FlowerData, 'id' | 'createdAt'>): FlowerData => {
     const newFlower: FlowerData = {
       ...flower,
       id: `local-${Date.now()}`,
       createdAt: Date.now(),
     };
     setFlowers((prev) => [...prev, newFlower]);
+    return newFlower;
   };
 
   return { flowers, addLocalFlower, isLoaded };

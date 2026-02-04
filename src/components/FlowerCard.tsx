@@ -16,6 +16,7 @@ interface FlowerCardProps {
     country?: string;
     city?: string;
   } | null;
+  isNewlyPlanted?: boolean;
 }
 
 const flowerColors: Record<FlowerType, { bg: string; accent: string }> = {
@@ -27,7 +28,7 @@ const flowerColors: Record<FlowerType, { bg: string; accent: string }> = {
   daisy: { bg: 'linear-gradient(135deg, #FFFDE8 0%, #FFF8D0 100%)', accent: '#DAA520' },
 };
 
-export const FlowerCard = ({ isOpen, onClose, flower }: FlowerCardProps) => {
+export const FlowerCard = ({ isOpen, onClose, flower, isNewlyPlanted = false }: FlowerCardProps) => {
   const { t } = useLanguage();
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -127,6 +128,22 @@ export const FlowerCard = ({ isOpen, onClose, flower }: FlowerCardProps) => {
               <div className="relative p-7 sm:p-8">
                 {/* Header */}
                 <div className="text-center mb-5">
+                  {/* "Your Flower" badge for newly planted */}
+                  {isNewlyPlanted && (
+                    <motion.div
+                      className="inline-block px-3 py-1 rounded-full text-xs font-body mb-3"
+                      style={{
+                        background: `linear-gradient(135deg, ${colors.accent}20, ${colors.accent}40)`,
+                        color: colors.accent,
+                        border: `1px solid ${colors.accent}40`,
+                      }}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      ✨ {t.yourFlower || 'Your Flower'}
+                    </motion.div>
+                  )}
                   <motion.div
                     className="text-5xl mb-3"
                     animate={{ 

@@ -44,6 +44,7 @@ export interface Translations {
   saving: string;
   messageCopied: string;
   downloadFailed: string;
+  yourFlower: string;
   
   // General
   close: string;
@@ -86,6 +87,7 @@ const translations: Record<Language, Translations> = {
     saving: 'Saving...',
     messageCopied: 'Message copied to clipboard!',
     downloadFailed: 'Failed to download card',
+    yourFlower: 'Your Flower',
     close: 'Close',
     loading: 'Loading...',
     error: 'Error',
@@ -124,6 +126,7 @@ const translations: Record<Language, Translations> = {
     saving: '保存中...',
     messageCopied: '消息已复制到剪贴板！',
     downloadFailed: '下载卡片失败',
+    yourFlower: '你的花朵',
     close: '关闭',
     loading: '加载中...',
     error: '错误',
@@ -162,6 +165,7 @@ const translations: Record<Language, Translations> = {
     saving: '保存中...',
     messageCopied: 'メッセージをコピーしました！',
     downloadFailed: 'カードのダウンロードに失敗しました',
+    yourFlower: 'あなたの花',
     close: '閉じる',
     loading: '読み込み中...',
     error: 'エラー',
@@ -200,6 +204,7 @@ const translations: Record<Language, Translations> = {
     saving: '저장 중...',
     messageCopied: '메시지가 클립보드에 복사되었습니다!',
     downloadFailed: '카드 다운로드 실패',
+    yourFlower: '당신의 꽃',
     close: '닫기',
     loading: '로딩 중...',
     error: '오류',
@@ -238,6 +243,7 @@ const translations: Record<Language, Translations> = {
     saving: 'Guardando...',
     messageCopied: '¡Mensaje copiado al portapapeles!',
     downloadFailed: 'Error al descargar la tarjeta',
+    yourFlower: 'Tu Flor',
     close: 'Cerrar',
     loading: 'Cargando...',
     error: 'Error',
@@ -276,6 +282,7 @@ const translations: Record<Language, Translations> = {
     saving: 'Sauvegarde...',
     messageCopied: 'Message copié dans le presse-papiers!',
     downloadFailed: 'Échec du téléchargement de la carte',
+    yourFlower: 'Votre Fleur',
     close: 'Fermer',
     loading: 'Chargement...',
     error: 'Erreur',
@@ -314,6 +321,7 @@ const translations: Record<Language, Translations> = {
     saving: 'Speichern...',
     messageCopied: 'Nachricht in die Zwischenablage kopiert!',
     downloadFailed: 'Karte konnte nicht heruntergeladen werden',
+    yourFlower: 'Deine Blume',
     close: 'Schließen',
     loading: 'Laden...',
     error: 'Fehler',
@@ -352,6 +360,7 @@ const translations: Record<Language, Translations> = {
     saving: 'Salvando...',
     messageCopied: 'Mensagem copiada para a área de transferência!',
     downloadFailed: 'Falha ao baixar o cartão',
+    yourFlower: 'Sua Flor',
     close: 'Fechar',
     loading: 'Carregando...',
     error: 'Erro',
@@ -390,6 +399,7 @@ const translations: Record<Language, Translations> = {
     saving: 'Сохранение...',
     messageCopied: 'Сообщение скопировано в буфер обмена!',
     downloadFailed: 'Не удалось загрузить открытку',
+    yourFlower: 'Ваш Цветок',
     close: 'Закрыть',
     loading: 'Загрузка...',
     error: 'Ошибка',
@@ -428,6 +438,7 @@ const translations: Record<Language, Translations> = {
     saving: 'جاري الحفظ...',
     messageCopied: 'تم نسخ الرسالة إلى الحافظة!',
     downloadFailed: 'فشل في تحميل البطاقة',
+    yourFlower: 'زهرتك',
     close: 'إغلاق',
     loading: 'جاري التحميل...',
     error: 'خطأ',
