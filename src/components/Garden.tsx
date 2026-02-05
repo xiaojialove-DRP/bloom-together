@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImpressionistFlower } from './ImpressionistFlower';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -10,18 +11,41 @@ interface GardenProps {
   flowers: FlowerData[];
   onFlowerClick?: (flower: FlowerData) => void;
   highlightedFlowerId?: string | null;
+  scrollToPosition?: { x: number; y: number } | null;
+  onScrollComplete?: () => void;
 }
 
-export const Garden = ({ flowers, onFlowerClick, highlightedFlowerId }: GardenProps) => {
+export const Garden = ({ flowers, onFlowerClick, highlightedFlowerId, scrollToPosition, onScrollComplete }: GardenProps) => {
   const { t } = useLanguage();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const highlightedFlowerRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to the newly planted flower position
+  useEffect(() => {
+    if (scrollToPosition && containerRef.current) {
+      // Small delay to let the flower render first
+      const timer = setTimeout(() => {
+        if (highlightedFlowerRef.current) {
+          highlightedFlowerRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'center',
+          });
+        }
+        onScrollComplete?.();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [scrollToPosition, onScrollComplete]);
   
   return (
-    <div className="absolute inset-0 overflow-hidden">
+    <div ref={containerRef} className="absolute inset-0 overflow-auto">
       {/* Flowers */}
       <AnimatePresence>
         {flowers.map((flower, index) => (
           <ImpressionistFlower
             key={flower.id}
+            ref={flower.id === highlightedFlowerId ? highlightedFlowerRef : undefined}
             type={flower.type}
             message={flower.message}
             author={flower.author}
