@@ -1,5 +1,14 @@
 import { useState, useEffect, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  IrisRenderer,
+  PoppyRenderer,
+  RoseRenderer,
+  SunflowerRenderer,
+  LavenderRenderer,
+  DaisyRenderer,
+  FlowerStage,
+} from './flowers/FlowerRenderers';
 
 export type FlowerType = 'iris' | 'poppy' | 'rose' | 'wildflower' | 'lavender' | 'daisy';
 
@@ -16,41 +25,41 @@ interface FlowerProps {
 
 const flowerColors: Record<FlowerType, { primary: string; secondary: string; shadow: string }> = {
   iris: { 
-    primary: 'hsl(270, 50%, 55%)', 
-    secondary: 'hsl(280, 55%, 45%)',
-    shadow: 'hsla(270, 50%, 55%, 0.4)'
+    primary: 'hsl(260, 65%, 60%)', 
+    secondary: 'hsl(280, 70%, 50%)',
+    shadow: 'hsla(260, 65%, 60%, 0.5)'
   },
   poppy: { 
-    primary: 'hsl(5, 70%, 50%)', 
-    secondary: 'hsl(15, 75%, 55%)',
-    shadow: 'hsla(5, 70%, 50%, 0.4)'
+    primary: 'hsl(0, 85%, 55%)', 
+    secondary: 'hsl(20, 90%, 50%)',
+    shadow: 'hsla(0, 85%, 55%, 0.5)'
   },
   rose: { 
-    primary: 'hsl(340, 60%, 65%)', 
-    secondary: 'hsl(330, 55%, 55%)',
-    shadow: 'hsla(340, 60%, 65%, 0.4)'
+    primary: 'hsl(340, 75%, 60%)', 
+    secondary: 'hsl(350, 80%, 50%)',
+    shadow: 'hsla(340, 75%, 60%, 0.5)'
   },
   wildflower: { 
-    primary: 'hsl(320, 65%, 55%)', 
-    secondary: 'hsl(310, 60%, 45%)',
-    shadow: 'hsla(320, 65%, 55%, 0.4)'
+    primary: 'hsl(45, 95%, 55%)', 
+    secondary: 'hsl(35, 90%, 50%)',
+    shadow: 'hsla(45, 95%, 55%, 0.5)'
   },
   lavender: { 
-    primary: 'hsl(265, 45%, 60%)', 
-    secondary: 'hsl(270, 50%, 50%)',
-    shadow: 'hsla(265, 45%, 60%, 0.4)'
+    primary: 'hsl(270, 55%, 70%)', 
+    secondary: 'hsl(280, 60%, 60%)',
+    shadow: 'hsla(270, 55%, 70%, 0.5)'
   },
   daisy: { 
-    primary: 'hsl(55, 90%, 95%)', 
-    secondary: 'hsl(45, 95%, 60%)',
-    shadow: 'hsla(55, 90%, 95%, 0.4)'
+    primary: 'hsl(0, 0%, 98%)', 
+    secondary: 'hsl(48, 100%, 50%)',
+    shadow: 'hsla(48, 100%, 50%, 0.5)'
   },
 };
 
 // Using forwardRef to fix AnimatePresence warning in Garden component
 export const ImpressionistFlower = forwardRef<HTMLDivElement, FlowerProps>(
   ({ type, message, author, x, y, delay = 0, onClick, isHighlighted = false }, ref) => {
-    const [stage, setStage] = useState<'seed' | 'sprout' | 'bloom'>('seed');
+    const [stage, setStage] = useState<FlowerStage>('seed');
     const [isHovered, setIsHovered] = useState(false);
     const colors = flowerColors[type];
 
@@ -64,143 +73,16 @@ export const ImpressionistFlower = forwardRef<HTMLDivElement, FlowerProps>(
     }, [delay]);
 
     const renderFlower = () => {
-      const petalCount = type === 'iris' ? 6 : type === 'daisy' ? 12 : 8;
-      
-      return (
-        <svg 
-          viewBox="0 0 100 120" 
-          className="w-full h-full"
-        >
-          {/* Stem - organic, curved */}
-          <motion.path
-            d="M50 115 Q45 90 50 70 Q55 50 50 35"
-            stroke="hsl(120, 45%, 35%)"
-            strokeWidth="3"
-            fill="none"
-            strokeLinecap="round"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ 
-              pathLength: stage !== 'seed' ? 1 : 0, 
-              opacity: stage !== 'seed' ? 1 : 0 
-            }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          />
-          
-          {/* Leaves - painterly organic shapes */}
-          {stage !== 'seed' && (
-            <>
-              <motion.ellipse
-                cx="38"
-                cy="85"
-                rx="12"
-                ry="5"
-                fill="hsl(110, 50%, 40%)"
-                transform="rotate(-40 38 85)"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 0.9 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-              />
-              <motion.ellipse
-                cx="62"
-                cy="75"
-                rx="12"
-                ry="5"
-                fill="hsl(115, 45%, 45%)"
-                transform="rotate(35 62 75)"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 0.9 }}
-                transition={{ duration: 0.4, delay: 0.4 }}
-              />
-            </>
-          )}
-          
-          {/* Petals - impressionist style with soft edges */}
-          {stage === 'bloom' && (
-            <motion.g
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.6, ease: "backOut" }}
-            >
-              {Array.from({ length: petalCount }).map((_, i) => {
-                const angle = (i * 360) / petalCount;
-                const petalLength = type === 'iris' ? 20 : type === 'daisy' ? 14 : 16;
-                const petalWidth = type === 'daisy' ? 3 : 7;
-                return (
-                  <motion.ellipse
-                    key={i}
-                    cx="50"
-                    cy={28 - petalLength / 2}
-                    rx={petalWidth}
-                    ry={petalLength}
-                    fill={i % 2 === 0 ? colors.primary : colors.secondary}
-                    transform={`rotate(${angle} 50 32)`}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ 
-                      duration: 0.3, 
-                      delay: i * 0.04,
-                      ease: "backOut"
-                    }}
-                    style={{
-                      filter: 'blur(0.3px)',
-                    }}
-                  />
-                );
-              })}
-              {/* Flower center */}
-              <motion.circle
-                cx="50"
-                cy="32"
-                r={type === 'daisy' ? 6 : 5}
-                fill={type === 'daisy' ? colors.secondary : 'hsl(45, 90%, 55%)'}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.3 }}
-              />
-            </motion.g>
-          )}
-          
-          {/* Seed */}
-          {stage === 'seed' && (
-            <motion.ellipse
-              cx="50"
-              cy="105"
-              rx="4"
-              ry="6"
-              fill="hsl(30, 50%, 30%)"
-              initial={{ scale: 0, y: 15 }}
-              animate={{ scale: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-            />
-          )}
-          
-          {/* Sprout */}
-          {stage === 'sprout' && (
-            <motion.g
-              initial={{ scale: 0, y: 15 }}
-              animate={{ scale: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: "backOut" }}
-            >
-              <ellipse
-                cx="46"
-                cy="45"
-                rx="5"
-                ry="10"
-                fill="hsl(110, 55%, 45%)"
-                transform="rotate(-12 46 45)"
-              />
-              <ellipse
-                cx="54"
-                cy="45"
-                rx="5"
-                ry="10"
-                fill="hsl(115, 50%, 50%)"
-                transform="rotate(12 54 45)"
-              />
-            </motion.g>
-          )}
-        </svg>
-      );
+      const props = { stage, colors };
+      switch (type) {
+        case 'iris': return <IrisRenderer {...props} />;
+        case 'poppy': return <PoppyRenderer {...props} />;
+        case 'rose': return <RoseRenderer {...props} />;
+        case 'wildflower': return <SunflowerRenderer {...props} />;
+        case 'lavender': return <LavenderRenderer {...props} />;
+        case 'daisy': return <DaisyRenderer {...props} />;
+        default: return <DaisyRenderer {...props} />;
+      }
     };
 
     return (

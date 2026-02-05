@@ -16,6 +16,7 @@ const Index = () => {
   const [selectedFlower, setSelectedFlower] = useState<FlowerData | null>(null);
   const [isCardOpen, setIsCardOpen] = useState(false);
   const [newlyPlantedId, setNewlyPlantedId] = useState<string | null>(null);
+  const [scrollToPosition, setScrollToPosition] = useState<{ x: number; y: number } | null>(null);
 
   // Auto-clear highlight after some time
   useEffect(() => {
@@ -40,6 +41,8 @@ const Index = () => {
     if (newFlower) {
       setNewlyPlantedId(newFlower.id);
       setSelectedFlower(newFlower);
+      // Scroll to the flower position
+      setScrollToPosition({ x: flower.x, y: flower.y });
       // Delay opening card to let the flower bloom animation play
       setTimeout(() => {
         setIsCardOpen(true);
@@ -98,6 +101,8 @@ const Index = () => {
           flowers={flowers} 
           onFlowerClick={handleFlowerClick}
           highlightedFlowerId={newlyPlantedId}
+          scrollToPosition={scrollToPosition}
+          onScrollComplete={() => setScrollToPosition(null)}
         />
       )}
       
